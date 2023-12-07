@@ -20,6 +20,7 @@ class Field():
             self.state = np.array(state, dtype=np.uint8, copy=True)
         else:
             self.state = np.full((Field.HEIGHT, Field.WIDTH), 0, dtype=np.uint8)
+        self._lines_cleared_ = 0
 
     def __str__(self):
         """
@@ -112,6 +113,7 @@ class Field():
         if row == -1:
             return row
         self._place_tetromino_(tetromino, row, column)
+        self._lines_cleared_ = sum(row.all() for row in self.state)
         self._line_clear_()
         return row
 
@@ -133,6 +135,12 @@ class Field():
         """
         return Field.HEIGHT - np.argmax(self.state.T != 0, axis=1)
 
+    def filled_lines(self):
+        """
+        Return the number of lines that were filled and cleared.
+        """
+        return self._lines_cleared_
+
     def get_scoring_vector(self):
         """
         Get a vector of values derived from the field used to score a tetromino
@@ -146,36 +154,64 @@ class Field():
             np.std(heights),               # Standard deviation of heights
             heights.max() - heights.min(), # Max height diff
             abs(ediff1d).max(),            # Max consecutive height diff
+            heights.max(),                 # Max height
+            -self.filled_lines(),          # Number of lines filled and cleared
         ])
-
-    def get_optimal_drop(self, tetromino, weights=None):
-        """
-        Given a tetromino and a vector of scoring weights, this method
-        calculates the best placement of the tetromino, scoring each placement
-        with the weight vector.
-        """
+    
+    # Returns a list of Fields after a valid move is played in t[0]
+    def get_drops(self, tetromino):
         rotations = [
             tetromino,
             tetromino.copy().rotate_right(),
             tetromino.copy().flip(),
-            tetromino.copy().rotate_left()
+            tetromino.copy().rotate_left(),
+        ]
+        return [
+            f
+            for tetromino_ in rotations
+            for column in range(Field.WIDTH)
+            if (f := self.copy()).drop(tetromino_, column) != -1
+        ]
+    
+    def get_optimal_drop(self, t, weights=None):
+        """
+        Given a slice of the upcoming tetrominos and a vector of scoring weights, this method
+        calculates the best placement of the tetromino, scoring each placement
+        with the weight vector.
+        """
+        t = list(t)
+        possible_fields = [self.copy()]
+        if len(t) != 1:
+            for tetromino in t[:-1]:
+                possible_fields = [drop for field in possible_fields for drop in field.get_drops(tetromino)]
+        print(len(possible_fields))
+        tetromino = t[-1]
+        rotations = [
+            tetromino,
+            tetromino.copy().rotate_right(),
+            tetromino.copy().flip(),
+            tetromino.copy().rotate_left(),
         ]
         best_row, best_column = None, None
         best_field = None
         best_drop_score = math.inf
-        for rotation, tetromino_ in enumerate(rotations):
-            for column in range(Field.WIDTH):
-                f = self.copy()
-                row = f.drop(tetromino_, column)
-                if row == -1:
-                    continue
-                scoring_vector = f.get_scoring_vector()
-                if weights is not None:
-                    score = scoring_vector.dot(weights)
-                else:
-                    score = scoring_vector.sum()
-                if score < best_drop_score:
-                    best_drop_score = score
-                    best_row, best_column = (row, column)
-                    best_field = f
+
+        for field in possible_fields:
+            for rotation, tetromino_ in enumerate(rotations):
+                for column in range(Field.WIDTH):
+                    f = field.copy()
+                    row = f.drop(tetromino_, column)
+                    if row == -1:
+                        continue
+                    scoring_vector = f.get_scoring_vector()
+                    if weights is not None:
+                        score = scoring_vector.dot(weights)
+                    else:
+                        score = scoring_vector.sum()
+                    if score < best_drop_score:
+                        best_drop_score = score
+                        best_row, best_column = (row, column)
+                        best_field = f
+
         return best_row, best_column, best_field, best_drop_score
+    
