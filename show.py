@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from lib.field import Field
+from collections import deque
+from lib.field import Field, ForwardSearchField, HeuristicSearchField
 from lib.tetromino import Tetromino
 import random
 import time
@@ -15,18 +16,22 @@ np.array([
 ])
 """
 
+NUM_TETROMINO_TO_EXPOSE = 1
+
+def get_random_tetromino():
+    return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
+
 if __name__ == '__main__':
-    field = Field()
-    current_tetromino = Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
-    time.sleep(2)
+    field = HeuristicSearchField(weights=[1,1,1,1,1,1,1])
+    t = deque(get_random_tetromino() for _ in range(NUM_TETROMINO_TO_EXPOSE))
     count = 0
     while True:
-        next_tetromino = Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L'])) 
-        row, column, field, score = field.get_optimal_drop(current_tetromino, [1,1,1,1,1])
+        row, column, field, score = field.get_optimal_drop(t)
         if field == None:
             break
-        print(count)
         print(field)
+        print(field.get_scoring_vector())
+        print(count)
         count += 1
-        current_tetromino = next_tetromino
-        time.sleep(0.2)
+        t.popleft()
+        t.append(get_random_tetromino())
