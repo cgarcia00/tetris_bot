@@ -103,7 +103,7 @@ class Field():
         """
         Returns a shallow copy of the field.
         """
-        return Field(self.state)
+        return Field(self.state, self.weights)
 
     def drop(self, tetromino, column):
         """
@@ -199,13 +199,13 @@ class Field():
 
 class ForwardSearchField(Field):
     def __init__(self, state=None, weights=[1,1,1,1,1,1,1]):
-        super().__init__(state)
+        super().__init__(state, weights)
 
     def copy(self):
         """
         Returns a shallow copy of the field.
         """
-        return ForwardSearchField(self.state)
+        return ForwardSearchField(self.state, self.weights)
     
     # Returns a list of Fields after a valid move is played in t[0]
     def _get_drops_(self, tetromino):
@@ -264,18 +264,19 @@ class ForwardSearchField(Field):
 
         return best_row, best_column, best_field, best_drop_score
 
+
 class HeuristicSearchField(Field):
     def __init__(self, state=None, weights=[1,1,1,1,1,1,1]):
-        super().__init__(state)
+        super().__init__(state, weights)
 
     def copy(self):
         """
         Returns a shallow copy of the field.
         """
-        return HeuristicSearchField(self.state)
+        return HeuristicSearchField(self.state, self.weights)
     
     # Returns a list of Fields after a valid move is played in t[0]
-    def _get_drops_(self, tetromino, weights, k=5):
+    def _get_drops_(self, tetromino, k=5):
         rotations = [
             tetromino,
             tetromino.copy().rotate_right(),
@@ -295,14 +296,6 @@ class HeuristicSearchField(Field):
                 else:
                     heapq.heappushpop(k_best_fields, f)
         return k_best_fields
-
-        return [
-            f
-            for tetromino_ in rotations
-            for column in range(Field.WIDTH)
-            if (f := self.copy()).drop(tetromino_, column) != -1
-        ]
-    
     
     def get_optimal_drop(self, t):
         """
@@ -314,7 +307,7 @@ class HeuristicSearchField(Field):
         possible_fields = [self.copy()]
         if len(t) != 1:
             for tetromino in t[:-1]:
-                possible_fields = [drop for field in possible_fields for drop in field._get_drops_(tetromino, self.weights)]
+                possible_fields = [drop for field in possible_fields for drop in field._get_drops_(tetromino)]
         tetromino = t[-1]
         rotations = [
             tetromino,

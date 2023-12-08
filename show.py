@@ -16,7 +16,7 @@ np.array([
 ])
 """
 
-NUM_TETROMINO_TO_EXPOSE = 1
+NUM_TETROMINO_TO_EXPOSE = 3
 
 def get_random_tetromino():
     return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
