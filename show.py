@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from collections import deque
-from lib.field import Field
+from lib.field import Field, ForwardSearchField, HeuristicSearchField
 from lib.tetromino import Tetromino
 import random
 import time
@@ -16,17 +16,17 @@ np.array([
 ])
 """
 
-NUM_TETROMINO_TO_EXPOSE = 3
+NUM_TETROMINO_TO_EXPOSE = 1
 
 def get_random_tetromino():
     return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
 
 if __name__ == '__main__':
-    field = Field()
+    field = HeuristicSearchField(weights=[1,1,1,1,1,1,1])
     t = deque(get_random_tetromino() for _ in range(NUM_TETROMINO_TO_EXPOSE))
     count = 0
     while True:
-        row, column, field, score = field.get_optimal_drop(t, [1,1,1,1,1,1,1])
+        row, column, field, score = field.get_optimal_drop(t)
         if field == None:
             break
         print(field)
