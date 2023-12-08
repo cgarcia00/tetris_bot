@@ -34,4 +34,4 @@ if __name__ == '__main__':
         print(count)
         count += 1
         t.popleft()
-        t.append(get_random_tetromino())        
+        t.append(get_random_tetromino())

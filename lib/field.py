@@ -159,7 +159,7 @@ class Field():
         ])
     
     # Returns a list of Fields after a valid move is played in t[0]
-    def get_drops(self, tetromino):
+    def _get_drops_(self, tetromino):
         rotations = [
             tetromino,
             tetromino.copy().rotate_right(),
@@ -183,7 +183,7 @@ class Field():
         possible_fields = [self.copy()]
         if len(t) != 1:
             for tetromino in t[:-1]:
-                possible_fields = [drop for field in possible_fields for drop in field.get_drops(tetromino)]
+                possible_fields = [drop for field in possible_fields for drop in field._get_drops_(tetromino)]
         print(len(possible_fields))
         tetromino = t[-1]
         rotations = [
