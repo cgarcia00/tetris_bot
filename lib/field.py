@@ -4,6 +4,7 @@ from lib.tetromino import Tetromino
 
 import numpy as np
 import math
+import heapq
 
 class Field():
 
@@ -11,16 +12,20 @@ class Field():
     HEIGHT = 22
     SCORING_ELEMENTS = 6
 
-    def __init__(self, state=None):
+    def __init__(self, state=None, weights=[1,1,1,1,1,1,1]):
         """
         Initializes a Tetris Field.
         Rows increase downward and columns increase to the right.
         """
+        self.weights = weights
         if state is not None:
             self.state = np.array(state, dtype=np.uint8, copy=True)
         else:
             self.state = np.full((Field.HEIGHT, Field.WIDTH), 0, dtype=np.uint8)
         self._lines_cleared_ = 0
+
+    def __lt__(self, other):
+        return self.get_scoring_vector().dot(self.weights) > other.get_scoring_vector().dot(other.weights)
 
     def __str__(self):
         """
@@ -158,6 +163,50 @@ class Field():
             -self.filled_lines(),          # Number of lines filled and cleared
         ])
     
+    def get_optimal_drop(self, t):
+        """
+        Given a slice of the upcoming tetrominos and a vector of scoring weights, this method
+        calculates the best placement of the tetromino, scoring each placement
+        with the weight vector.
+        """
+        tetromino = t[0]
+        rotations = [
+            tetromino,
+            tetromino.copy().rotate_right(),
+            tetromino.copy().flip(),
+            tetromino.copy().rotate_left()
+        ]
+        best_row, best_column = None, None
+        best_field = None
+        best_drop_score = math.inf
+        for rotation, tetromino_ in enumerate(rotations):
+            for column in range(Field.WIDTH):
+                f = self.copy()
+                row = f.drop(tetromino_, column)
+                if row == -1:
+                    continue
+                scoring_vector = f.get_scoring_vector()
+                if self.weights is not None:
+                    score = scoring_vector.dot(self.weights)
+                else:
+                    score = scoring_vector.sum()
+                if score < best_drop_score:
+                    best_drop_score = score
+                    best_row, best_column = (row, column)
+                    best_field = f
+        return best_row, best_column, best_field, best_drop_score
+
+
+class ForwardSearchField(Field):
+    def __init__(self, state=None, weights=[1,1,1,1,1,1,1]):
+        super().__init__(state)
+
+    def copy(self):
+        """
+        Returns a shallow copy of the field.
+        """
+        return ForwardSearchField(self.state)
+    
     # Returns a list of Fields after a valid move is played in t[0]
     def _get_drops_(self, tetromino):
         rotations = [
@@ -173,7 +222,8 @@ class Field():
             if (f := self.copy()).drop(tetromino_, column) != -1
         ]
     
-    def get_optimal_drop(self, t, weights=None):
+    
+    def get_optimal_drop(self, t):
         """
         Given a slice of the upcoming tetrominos and a vector of scoring weights, this method
         calculates the best placement of the tetromino, scoring each placement
@@ -184,7 +234,6 @@ class Field():
         if len(t) != 1:
             for tetromino in t[:-1]:
                 possible_fields = [drop for field in possible_fields for drop in field._get_drops_(tetromino)]
-        print(len(possible_fields))
         tetromino = t[-1]
         rotations = [
             tetromino,
@@ -204,8 +253,8 @@ class Field():
                     if row == -1:
                         continue
                     scoring_vector = f.get_scoring_vector()
-                    if weights is not None:
-                        score = scoring_vector.dot(weights)
+                    if self.weights is not None:
+                        score = scoring_vector.dot(self.weights)
                     else:
                         score = scoring_vector.sum()
                     if score < best_drop_score:
@@ -214,4 +263,84 @@ class Field():
                         best_field = f
 
         return best_row, best_column, best_field, best_drop_score
+
+class HeuristicSearchField(Field):
+    def __init__(self, state=None, weights=[1,1,1,1,1,1,1]):
+        super().__init__(state)
+
+    def copy(self):
+        """
+        Returns a shallow copy of the field.
+        """
+        return HeuristicSearchField(self.state)
     
+    # Returns a list of Fields after a valid move is played in t[0]
+    def _get_drops_(self, tetromino, weights, k=5):
+        rotations = [
+            tetromino,
+            tetromino.copy().rotate_right(),
+            tetromino.copy().flip(),
+            tetromino.copy().rotate_left(),
+        ]
+
+        k_best_fields = []
+        for tetromino_ in rotations:
+            for column in range(Field.WIDTH):
+                f = self.copy()
+                row = f.drop(tetromino_, column)
+                if row == -1:
+                    continue
+                if len(k_best_fields) <= k:
+                    heapq.heappush(k_best_fields, f)
+                else:
+                    heapq.heappushpop(k_best_fields, f)
+        return k_best_fields
+
+        return [
+            f
+            for tetromino_ in rotations
+            for column in range(Field.WIDTH)
+            if (f := self.copy()).drop(tetromino_, column) != -1
+        ]
+    
+    
+    def get_optimal_drop(self, t):
+        """
+        Given a slice of the upcoming tetrominos and a vector of scoring weights, this method
+        calculates the best placement of the tetromino, scoring each placement
+        with the weight vector.
+        """
+        t = list(t)
+        possible_fields = [self.copy()]
+        if len(t) != 1:
+            for tetromino in t[:-1]:
+                possible_fields = [drop for field in possible_fields for drop in field._get_drops_(tetromino, self.weights)]
+        tetromino = t[-1]
+        rotations = [
+            tetromino,
+            tetromino.copy().rotate_right(),
+            tetromino.copy().flip(),
+            tetromino.copy().rotate_left(),
+        ]
+        best_row, best_column = None, None
+        best_field = None
+        best_drop_score = math.inf
+
+        for field in possible_fields:
+            for rotation, tetromino_ in enumerate(rotations):
+                for column in range(Field.WIDTH):
+                    f = field.copy()
+                    row = f.drop(tetromino_, column)
+                    if row == -1:
+                        continue
+                    scoring_vector = f.get_scoring_vector()
+                    if self.weights is not None:
+                        score = scoring_vector.dot(self.weights)
+                    else:
+                        score = scoring_vector.sum()
+                    if score < best_drop_score:
+                        best_drop_score = score
+                        best_row, best_column = (row, column)
+                        best_field = f
+
+        return best_row, best_column, best_field, best_drop_score
