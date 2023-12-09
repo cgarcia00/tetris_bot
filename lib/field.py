@@ -5,6 +5,9 @@ from lib.tetromino import Tetromino
 import numpy as np
 import math
 import heapq
+import random
+from threading import Thread
+from collections import deque
 
 class Field():
 
@@ -98,6 +101,50 @@ class Field():
             tmp = self.state[non_filled]
             self.state.fill(0)
             self.state[Field.HEIGHT - tmp.shape[0]:] = tmp
+
+    def generate_training_score(self, depth=1, num_trials=3):
+        def get_random_tetromino():
+            return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
+        
+        result = 0
+        for _ in range(num_trials):
+            field = self.copy()
+            t = deque(get_random_tetromino() for _ in range(depth))
+            count = 0
+            while True:
+                row, column, field, score = field.get_optimal_drop(t)
+                if field == None:
+                    break
+                count += 1
+                t.popleft()
+                t.append(get_random_tetromino())
+
+            result += -count
+        return result / num_trials
+        # results = [None for _ in range(num_trials)]
+        # threads = [None for _ in range(num_trials)]
+        # def run_trial(results, index):
+        #     field = self.copy()
+        #     t = deque(get_random_tetromino() for _ in range(depth))
+        #     count = 0
+        #     while True:
+        #         row, column, field, score = field.get_optimal_drop(t)
+        #         if field == None:
+        #             break
+        #         count += 1
+        #         t.popleft()
+        #         t.append(get_random_tetromino())
+
+        #     results[index] = -count
+
+        # for i in range(num_trials):
+        #     threads[i] = Thread(target=run_trial, args=(results, i))
+        #     threads[i].start()
+
+        # for i in range(num_trials):
+        #     threads[i].join()
+
+        # return sum(results) / num_trials
 
     def copy(self):
         """
