@@ -323,7 +323,7 @@ class HeuristicSearchField(Field):
         return HeuristicSearchField(self.state, self.weights)
     
     # Returns a list of Fields after a valid move is played in t[0]
-    def _get_drops_(self, tetromino, k=5):
+    def _get_drops_(self, tetromino, k=10):
         rotations = [
             tetromino,
             tetromino.copy().rotate_right(),

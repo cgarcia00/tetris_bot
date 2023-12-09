@@ -31,7 +31,9 @@ if __name__ == '__main__':
     # 100 10 weights round 2
     field_weights4=[18.33617477, 8.7924548, 10.0326507, -0.5597502, 10.35395414,  3.30750448, 10.00204665]
 
-    for field_weights in (field_weights1, field_weights2, field_weights3, field_weights4):
+    field_weights5=[0.90897055,0.73683765,0.80142913,0.10518109,0.63010291,0.38493738,0.24763511]
+
+    for field_weights in (field_weights5,):
         print(field_weights)            
         with Pool(8) as pool:
             results1 = pool.starmap(get_score, [(field_weights, 1)] * NUM_TRIALS)

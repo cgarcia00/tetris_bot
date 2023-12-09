@@ -18,7 +18,7 @@ return np.array([
 ])
 """
 
-NUM_TETROMINO_TO_EXPOSE = 3
+NUM_TETROMINO_TO_EXPOSE = 1
 
 def get_random_tetromino():
     return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
@@ -30,7 +30,9 @@ if __name__ == '__main__':
     # 25 3 weights
     # field = HeuristicSearchField(weights=[26.15243376, 17.20669049, 17.70941622,  6.28345525, 13.27890416,  6.94699331, 4.25341613])
     # 100 10 weights round 2
-    field = HeuristicSearchField(weights=[18.33617477, 8.7924548, 10.0326507, -0.5597502, 10.35395414,  3.30750448, 10.00204665])
+    #field = HeuristicSearchField(weights=[18.33617477, 8.7924548, 10.0326507, -0.5597502, 10.35395414,  3.30750448, 10.00204665])
+    
+    field = HeuristicSearchField(weights=[0.90897055,0.73683765,0.80142913,0.10518109,0.63010291,0.38493738,0.24763511])
     t = deque(get_random_tetromino() for _ in range(NUM_TETROMINO_TO_EXPOSE))
     count = 0
     while True:

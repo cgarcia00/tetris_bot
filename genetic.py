@@ -77,6 +77,7 @@ def main():
         for _ in range(m)
     ]
     S = TruncationSelection(5)
+    #S = RouletteWheelSelection()
     C = UniformCrossover()
     M = GaussianMutation(0.025)
 
