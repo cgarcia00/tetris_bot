@@ -7,23 +7,30 @@ import random
 import time
 
 """
-np.array([
+return np.array([
     self.count_gaps(),             # Gap count
     np.mean(heights),              # Average height
     np.std(heights),               # Standard deviation of heights
     heights.max() - heights.min(), # Max height diff
     abs(ediff1d).max(),            # Max consecutive height diff
+    heights.max(),                 # Max height
+    -self.filled_lines(),          # Number of lines filled and cleared
 ])
 """
 
-NUM_TETROMINO_TO_EXPOSE = 1
+NUM_TETROMINO_TO_EXPOSE = 3
 
 def get_random_tetromino():
     return Tetromino.create(random.choice(['I', 'O', 'T', 'S', 'Z', 'J', 'L']))
 
 if __name__ == '__main__':
     # field = HeuristicSearchField(weights=[ 7.60018953, 8.00419482,  1.88494599, -0.26924129,  6.31572023,  2.23826017, 4.64843085])
-    field = HeuristicSearchField(weights=[24.71042388, 5.72456393, 15.55560536, 0.45457095, 10.81151936, 1.20316539, 6.26064719])
+    # 100 10 weights
+    # field = HeuristicSearchField(weights=[24.71042388, 5.72456393, 15.55560536, 0.45457095, 10.81151936, 1.20316539, 6.26064719])
+    # 25 3 weights
+    # field = HeuristicSearchField(weights=[26.15243376, 17.20669049, 17.70941622,  6.28345525, 13.27890416,  6.94699331, 4.25341613])
+    # 100 10 weights round 2
+    field = HeuristicSearchField(weights=[18.33617477, 8.7924548, 10.0326507, -0.5597502, 10.35395414,  3.30750448, 10.00204665])
     t = deque(get_random_tetromino() for _ in range(NUM_TETROMINO_TO_EXPOSE))
     count = 0
     while True:

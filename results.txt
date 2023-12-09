@@ -1,0 +1,8 @@
+Results from eval.py
+--------------------------------
+Training
+Scores
+--------------------------------
+Depth 1:
+Depth 2:
+Depth 3:

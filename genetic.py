@@ -43,8 +43,8 @@ class GaussianMutation:
         return child + np.random.normal(size=len(child))*self.sigma
 
 def genetic_algorithm(population, k_max, S, C, M):
-    def set_score(field, results, index):
-        results[index] = field.generate_training_score()
+    # def set_score(field, results, index):
+    #     results[index] = field.generate_training_score()
 
     for k in range(k_max):
         print(f'Starting generation {k+1}')
@@ -70,15 +70,15 @@ def genetic_algorithm(population, k_max, S, C, M):
     return population[np.argmin(HeuristicSearchField(weights=pop_val).generate_training_score() for pop_val in population)]
 
 def main():
-    m = 100
-    k_max = 10
+    m = 50
+    k_max = 5
     population = [
-        [random.uniform(0, 25) for _ in range(7)]
+        [random.uniform(-1, 1) for _ in range(7)]
         for _ in range(m)
     ]
-    S = TruncationSelection(10)
+    S = TruncationSelection(5)
     C = UniformCrossover()
-    M = GaussianMutation(1.25)
+    M = GaussianMutation(0.025)
 
     x = genetic_algorithm(population, k_max, S, C, M)
     print(x)
